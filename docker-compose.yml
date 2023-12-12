@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  local-db:
+    image: postgres:16.1-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_db_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_DB_PORT:-5432}:5432"
+    # It knows to pull this data from .env file
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB_NAME:-fallback_db_name}"
+      POSTGRES_USER: "${POSTGRES_DB_USER:-fallback_db_user}"
+      POSTGRES_PASSWORD: "${POSTGRES_DB_PASSWORD:-fallback_db_password}"
+      PGDATA: /var/lib/postgresql/data
+      ALLOW_IP_RANGE: "0.0.0.0/0"
+
+volumes:
+  postgres_db_data:
+    name: "template_postgres_volume"
