@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"golangapi/common"
 	"golangapi/config"
+	"golangapi/constants"
 	"golangapi/databases/gorm"
 	postgresqlclient "golangapi/databases/postgre_sql_client"
 	"log"
 	"os"
 	"sync"
 	"time"
+
+	"gorm.io/gorm/logger"
 )
 
 func main() {
@@ -23,7 +26,7 @@ func main() {
 	// =================== CONNECT TO THE DB ===================
 	var wg sync.WaitGroup
 	
-	wg.Add(2)
+	wg.Add(1)
 	
 	go common.CheckWg(
 		common.EaseOffRetryStrategy(3, time.Second, func() (bool, error) {
@@ -41,10 +44,14 @@ func main() {
 	wg.Wait()
 
 	// =================== LINK THE POSTGRE TO GORM ===================
-	_, err = gorm.InitDefaultPostgresGorm()
+	gDb, err := gorm.InitDefaultPostgresGorm()
 
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	if config.Config.Env != constants.ProductionEnv {
+		gDb.Logger = logger.Default.LogMode(logger.Info)
 	}
 
 	fmt.Println("OK")
