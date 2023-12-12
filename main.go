@@ -1,48 +1,55 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"golangapi/databases/postgre"
+	"golangapi/config"
 	"log"
+	"os"
 )
 
 func main() {
-	fmt.Println("Hello World")
-
-	dsnBuilder, err := postgre.NewPgDsnBuilder(
-		"localhost", 
-		"6660",
-		"some_db_user",
-		"some_db_pass",
-		"some_db_name",
-	)
+	// =================== LOAD IN THE CONFIG ===================
+	err := config.InitConfig(os.Args[1:])
 
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	err = postgre.InitPostgrePool(*dsnBuilder)
+	fmt.Println(config.Config)
 
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// dsnBuilder, err := postgre.NewPgDsnBuilder(
+	// 	"localhost", 
+	// 	"6660",
+	// 	"some_db_user",
+	// 	"some_db_pass",
+	// 	"some_db_name",
+	// )
 
-	pool := postgre.GetPostgrePool()
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
 
-	conn, err := pool.Acquire(context.Background())
+	// err = postgre.InitPostgrePool(*dsnBuilder)
 
-	defer conn.Release()
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
 
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// pool := postgre.GetPostgrePool()
 
-	err = conn.Ping(context.Background())
+	// conn, err := pool.Acquire(context.Background())
 
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// defer conn.Release()
 
-	fmt.Println("PINGED!!")
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// err = conn.Ping(context.Background())
+
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// fmt.Println("PINGED!!")
 }
