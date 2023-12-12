@@ -5,7 +5,7 @@ import (
 	"golangapi/common"
 	"golangapi/config"
 	"golangapi/constants"
-	"golangapi/databases/gorm"
+	gormdb "golangapi/databases/gorm"
 	postgresqlclient "golangapi/databases/postgre_sql_client"
 	"golangapi/engines"
 	"log"
@@ -45,7 +45,7 @@ func main() {
 	wg.Wait()
 
 	// =================== LINK THE POSTGRE TO GORM ===================
-	gDb, err := gorm.InitDefaultPostgresGorm()
+	gDb, err := gormdb.InitDefaultPostgresGorm()
 
 	if err != nil {
 		log.Fatalln(err)

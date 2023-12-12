@@ -21,5 +21,14 @@ func NewGinRouter() *gin.Engine {
 		healthCheckGroup.GET(routes.Healthcheck.Server, controllers.CheckServer)
 	}
 
+	// User routes
+	userController := controllers.NewDefaultUserController()
+
+	userGroup := router.Group("/user")
+	{
+		userGroup.POST(routes.User.Register, userController.RegisterUser)
+		userGroup.POST(routes.User.Login, userController.LoginUser)
+	}
+
 	return router
 }
