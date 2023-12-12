@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"golangapi/common"
 	"golangapi/config"
 	"golangapi/databases/gorm"
 	postgresqlclient "golangapi/databases/postgre_sql_client"
 	"log"
 	"os"
+	"sync"
+	"time"
 )
 
 func main() {
@@ -18,12 +21,26 @@ func main() {
 	}
 
 	// =================== CONNECT TO THE DB ===================
-	err = postgresqlclient.InitDefaultPostgreSqlClient()
+	var wg sync.WaitGroup
+	
+	wg.Add(2)
+	
+	go common.CheckWg(
+		common.EaseOffRetryStrategy(3, time.Second, func() (bool, error) {
+			err = postgresqlclient.InitDefaultPostgreSqlClient()
 
-	if err != nil {
-		log.Fatalln(err)
-	}
+			if err != nil {
+				return true, err
+			}
+			
+			return false, err
+		}),
+		&wg,
+	)
+	
+	wg.Wait()
 
+	// =================== LINK THE POSTGRE TO GORM ===================
 	_, err = gorm.InitDefaultPostgresGorm()
 
 	if err != nil {
