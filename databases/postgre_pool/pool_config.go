@@ -1,6 +1,7 @@
 package postgre_pool
 
 import (
+	"golangapi/databases/postgre_dns"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,7 +16,7 @@ type PostgrePoolConfig struct {
 	connectTimeout time.Duration
 }
 
-func NewPgPoolConfig(dsn PgDSNBuilder, options ...PostgrePoolConfigOption) (*pgxpool.Config, error) {
+func NewPgPoolConfig(dsn postgre_dns.PgDSNBuilder, options ...PostgrePoolConfigOption) (*pgxpool.Config, error) {
 	pgClient := &PostgrePoolConfig{}
 
 	// Set default values

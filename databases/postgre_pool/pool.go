@@ -3,6 +3,7 @@ package postgre_pool
 import (
 	"context"
 	"golangapi/config"
+	"golangapi/databases/postgre_dns"
 	"log"
 	"strconv"
 
@@ -13,7 +14,7 @@ var (
 	connectionPool *pgxpool.Pool
 )
 
-func InitPostgrePool(dsn PgDSNBuilder, options ...PostgrePoolConfigOption) error {
+func InitPostgrePool(dsn postgre_dns.PgDSNBuilder, options ...PostgrePoolConfigOption) error {
 	config, err := NewPgPoolConfig(dsn, options...)
 
 	if err != nil {
@@ -32,7 +33,7 @@ func InitPostgrePool(dsn PgDSNBuilder, options ...PostgrePoolConfigOption) error
 }
 
 func InitDefaultPool() error {
-	dsnBuilder, err := NewPgDsnBuilder(
+	dsnBuilder, err := postgre_dns.NewPgDsnBuilder(
 		config.Config.Postgres.Host,
 		strconv.Itoa(config.Config.Postgres.Port),
 		config.Config.Postgres.User,

@@ -1,4 +1,4 @@
-package postgre_pool
+package postgre_dns
 
 import (
 	"golangapi/common"
