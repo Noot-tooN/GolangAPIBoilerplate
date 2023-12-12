@@ -7,6 +7,7 @@ import (
 	"golangapi/constants"
 	"golangapi/databases/gorm"
 	postgresqlclient "golangapi/databases/postgre_sql_client"
+	"golangapi/engines"
 	"log"
 	"os"
 	"sync"
@@ -54,5 +55,15 @@ func main() {
 		gDb.Logger = logger.Default.LogMode(logger.Info)
 	}
 
-	fmt.Println("OK")
+	// =================== RUN THE SERVER ===================
+	router := engines.NewGinRouter()
+
+	err = router.Run(fmt.Sprintf("%v:%v", 
+		config.Config.Server.Host, 
+		config.Config.Server.Port,
+	))
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 }

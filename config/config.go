@@ -23,6 +23,10 @@ type ServerConfig struct {
 		Password string `default:"custom-pass" env:"DB_PASSWORD" flag:"pass" yaml:"postgres.pass" usage:"Set a password which will be user for authentication for PostgreSQL database"`
 		DbName   string `default:"custom-db-name" env:"DB_NAME" flag:"dbname" yaml:"postgres.dbname" usage:"Set a PostgreSQL database name that is going to be targeted"`
 	}
+	Server struct {
+		Host     string `default:"localhost" env:"HOST" flag:"host" yaml:"server.host" usage:"Set a host that the server will listen on"`
+		Port     int    `default:"9911" env:"PORT" flag:"port" yaml:"server.port" usage:"Set a port number that the server will listen on"`
+	}
 }
 
 type GlobalConfig struct {
