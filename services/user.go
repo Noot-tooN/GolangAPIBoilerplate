@@ -19,6 +19,7 @@ type IUserService interface {
 	HardDeleteUser(uuid string) error
 
 	GetProfile(uuid string) (*outputs.UserProfile, error)
+	GetAllProfiles() ([]outputs.UserProfile, error)
 }
 
 type UserService struct {
@@ -105,6 +106,16 @@ func (us UserService) HardDeleteUser(uuid string) error {
 
 func (us UserService) GetProfile(uuid string) (*outputs.UserProfile, error) {
 	userInfo, err := us.UserDataLayer.FindUserByUuid(uuid, us.GormDb)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userInfo, nil
+}
+
+func (us UserService) GetAllProfiles() ([]outputs.UserProfile, error) {
+	userInfo, err := us.UserDataLayer.FindAllUsers(us.GormDb)
 
 	if err != nil {
 		return nil, err

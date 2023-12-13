@@ -1,6 +1,7 @@
 package engines
 
 import (
+	"golangapi/constants"
 	"golangapi/controllers"
 	"golangapi/middlewares"
 	"golangapi/routes"
@@ -10,7 +11,7 @@ import (
 
 func NewGinRouter() *gin.Engine {
 	// Init middlewares
-	checkTokenMW := middlewares.NewDefaultUserMiddleware()
+	userMw := middlewares.NewDefaultUserMiddleware()
 
 	// Create new instance
 	router := gin.New()
@@ -32,9 +33,17 @@ func NewGinRouter() *gin.Engine {
 	{
 		userGroup.POST(routes.User.Register, userController.RegisterUser)
 		userGroup.POST(routes.User.Login, userController.LoginUser)
-		userGroup.DELETE(routes.User.SoftDelete, checkTokenMW.UserTokenOk(), userController.SoftDeleteUser)
-		userGroup.DELETE(routes.User.HardDelete, checkTokenMW.UserTokenOk(), userController.HardDeleteUser)
-		userGroup.GET(routes.User.GetProfile, checkTokenMW.UserTokenOk(), userController.GetUserProfile)
+		userGroup.DELETE(routes.User.SoftDelete, userMw.UserTokenOk(), userController.SoftDeleteUser)
+		userGroup.DELETE(routes.User.HardDelete, userMw.UserTokenOk(), userController.HardDeleteUser)
+		userGroup.GET(routes.User.GetProfile, userMw.UserTokenOk(), userController.GetUserProfile)
+	}
+
+	adminController := controllers.NewDefaultAdminController()
+
+	adminGroup := router.Group("/admin", userMw.AllowedRolesMW(constants.ADMIN)...)
+	{
+		adminGroup.GET(routes.Admin.GetUserInfo, adminController.GetUserDataById)
+		adminGroup.GET(routes.Admin.GetAllUsers, adminController.GetAllUsers)
 	}
 
 	return router

@@ -1,6 +1,9 @@
 package middlewares
 
 import (
+	"fmt"
+	"golangapi/constants"
+	gormdb "golangapi/databases/gorm"
 	"golangapi/datalayers"
 	"golangapi/services"
 	"net/http"
@@ -12,27 +15,28 @@ import (
 
 type IUserMiddleware interface {
 	UserTokenOk() gin.HandlerFunc
+	AllowedRolesMW(allowedRoles ...constants.RoleName) []gin.HandlerFunc
 }
 
 type UserMiddleware struct {
-	UserDatalayer datalayers.UserDatalayer
-	TokenHandler services.ITokenHandler
+	UserRoleDataLayer datalayers.UserRoleDatalayer
+	TokenHandler      services.ITokenHandler
 }
 
 func NewUserMiddleware(
-	userDL datalayers.UserDatalayer,
 	tokenHandler services.ITokenHandler,
+	useRoleDL datalayers.GormUserRoleDatalayer,
 ) IUserMiddleware {
 	return UserMiddleware{
-		UserDatalayer: userDL,
-		TokenHandler: tokenHandler,
+		TokenHandler:      tokenHandler,
+		UserRoleDataLayer: useRoleDL,
 	}
 }
 
 func NewDefaultUserMiddleware() IUserMiddleware {
 	return UserMiddleware{
-		UserDatalayer: datalayers.NewGormUserDatalayer(),
-		TokenHandler: services.NewDefaultSymmetricalPasetoTokenHandler(),
+		UserRoleDataLayer: datalayers.NewGormUserRoleDatalayer(),
+		TokenHandler:      services.NewDefaultSymmetricalPasetoTokenHandler(),
 	}
 }
 
@@ -89,5 +93,84 @@ func (um UserMiddleware) UserTokenOk() gin.HandlerFunc {
 		}
 
 		ctx.Set("USER_UUID", validUserUuid)
+	}
+}
+
+func (um UserMiddleware) RoleMiddlewareFactory(allowedRoles ...constants.RoleName) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userUuidString, exists := ctx.Get("USER_UUID")
+
+		if !exists {
+			ctx.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{
+					"message": "Tried using the app without user uuid",
+				},
+			)
+
+			return
+		}
+
+		userUuid, err := uuid.FromString(fmt.Sprintf("%v", userUuidString))
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{
+					"message": "Invalid uuid",
+				},
+			)
+
+			return
+		}
+
+		userRoles, err := um.UserRoleDataLayer.GetUserRoles(userUuid, gormdb.GetDefaultGormClient())
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(
+				http.StatusInternalServerError,
+				gin.H{
+					"message": "Couldn't fetch users roles",
+				},
+			)
+
+			return
+		}
+
+		matchingRole := false
+
+		for _, allowedRole := range allowedRoles {
+			for _, userRole := range userRoles {
+				if allowedRole == userRole.Name {
+					matchingRole = true
+					break
+				}
+			}
+
+			if matchingRole {
+				break
+			}
+		}
+
+		if !matchingRole {
+			ctx.AbortWithStatusJSON(
+				http.StatusUnauthorized,
+				gin.H{
+					"message": "Unauthorized",
+				},
+			)
+
+			return
+		}
+
+		// Go forward
+		ctx.Next()
+	}
+}
+
+func (um UserMiddleware) AllowedRolesMW(allowedRoles ...constants.RoleName) []gin.HandlerFunc {
+	return []gin.HandlerFunc{
+		um.UserTokenOk(),
+		um.RoleMiddlewareFactory(allowedRoles...),
 	}
 }

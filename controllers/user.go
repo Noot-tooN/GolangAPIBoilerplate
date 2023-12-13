@@ -14,7 +14,6 @@ type IUserController interface {
 	RegisterUser(ctx *gin.Context)
 	LoginUser(ctx *gin.Context)
 
-	// GetUserDataById(ctx *gin.Context)
 	SoftDeleteUser(ctx *gin.Context)
 	HardDeleteUser(ctx *gin.Context)
 
