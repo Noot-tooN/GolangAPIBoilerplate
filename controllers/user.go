@@ -78,7 +78,7 @@ func (uc UserController) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	err = uc.UserService.VerifyUser(loginData)
+	token, err := uc.UserService.VerifyUser(loginData)
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(
@@ -91,6 +91,8 @@ func (uc UserController) LoginUser(ctx *gin.Context) {
 
 	ctx.JSON(
 		http.StatusOK,
-		constants.RequestFinished,
+		gin.H{
+			"token": token,
+		},
 	)
 }

@@ -10,18 +10,20 @@ import (
 
 type IUserService interface {
 	CreateUser(registerData inputs.Registration) error
-	VerifyUser(loginData inputs.Login) error
+	VerifyUser(loginData inputs.Login) (string, error)
 }
 
 type UserService struct {
 	UserDataLayer datalayers.UserDatalayer
 	CryptoService ICryptoService
+	TokenHandler ITokenHandler
 }
 
-func NewUserService(userDL datalayers.UserDatalayer, cryptoService ICryptoService) IUserService {
+func NewUserService(userDL datalayers.UserDatalayer, cryptoService ICryptoService, tokenHandler ITokenHandler) IUserService {
 	return UserService{
 		UserDataLayer: userDL,
 		CryptoService: cryptoService,
+		TokenHandler: tokenHandler,
 	}
 }
 
@@ -29,6 +31,7 @@ func NewDefaultUserService() IUserService {
 	return UserService{
 		UserDataLayer: datalayers.NewGormUserDatalayer(),
 		CryptoService: NewDefaultCryptoService(),
+		TokenHandler: NewDefaultSymmetricalPasetoTokenHandler(),
 	}
 }
 
@@ -50,21 +53,27 @@ func (us UserService) CreateUser(registerData inputs.Registration) error {
 	return err
 }
 
-func (us UserService) VerifyUser(loginData inputs.Login) error {
+func (us UserService) VerifyUser(loginData inputs.Login) (string, error) {
 	user, err := us.UserDataLayer.FindUserByEmail(loginData.Email, gormdb.GetDefaultGormClient())
 
 	if err != nil {
 		fmt.Println("Invalid email")
-		return fmt.Errorf("Invalid combination")
+		return "", fmt.Errorf("invalid combination")
 	}
 
 	isOk := us.CryptoService.CheckPasswordHash(loginData.Password, user.Password)
 
 	if !isOk {
 		fmt.Println("Invalid pass")
-		return fmt.Errorf("Invalid combination")
+		return "", fmt.Errorf("invalid combination")
 	}
 
-	return nil
+	token, err := us.TokenHandler.CreateToken(nil, nil)
+
+	if err != nil {
+		return "", fmt.Errorf("internal server error")
+	}
+
+	return token, nil
 }
 

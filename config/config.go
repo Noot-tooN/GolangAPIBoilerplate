@@ -2,6 +2,7 @@ package config
 
 import (
 	"golangapi/constants"
+	"time"
 
 	"github.com/cristalhq/aconfig"
 	"github.com/cristalhq/aconfig/aconfigdotenv"
@@ -26,6 +27,11 @@ type ServerConfig struct {
 	Server struct {
 		Host     string `default:"localhost" env:"HOST" flag:"host" yaml:"server.host" usage:"Set a host that the server will listen on"`
 		Port     int    `default:"9911" env:"PORT" flag:"port" yaml:"server.port" usage:"Set a port number that the server will listen on"`
+	}
+	Paseto struct {
+		PrivateKey string        `default:"" env:"PRIVATE_KEY" flag:"privatekey" yaml:"pasetotoken.privatekey" usage:"Define the private key that will be used for token signing"`
+		Issuer     string        `default:"golangapi" env:"ISSUE" flag:"issue" yaml:"pasetotoken.issuer" usage:"Define the issuer name for generated tokens"`
+		Lifetime   time.Duration `default:"2h" env:"LIFETIME" flag:"lifetime" yaml:"pasetotoken.lifetime" usage:"Define the lifetime of the generated tokens"`
 	}
 }
 
