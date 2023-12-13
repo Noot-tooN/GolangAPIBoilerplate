@@ -57,6 +57,8 @@ func main() {
 
 	err = gDb.AutoMigrate(
 		&models.UserInfo{},
+		&models.Role{},
+		&models.UserRole{},
 	)
 
 	if err != nil {

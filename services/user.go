@@ -7,6 +7,8 @@ import (
 	gormdb "golangapi/databases/gorm"
 	"golangapi/datalayers"
 	"golangapi/models"
+
+	"gorm.io/gorm"
 )
 
 type IUserService interface {
@@ -22,14 +24,21 @@ type IUserService interface {
 type UserService struct {
 	UserDataLayer datalayers.UserDatalayer
 	CryptoService ICryptoService
-	TokenHandler ITokenHandler
+	TokenHandler  ITokenHandler
+	GormDb        *gorm.DB
 }
 
-func NewUserService(userDL datalayers.UserDatalayer, cryptoService ICryptoService, tokenHandler ITokenHandler) IUserService {
+func NewUserService(
+	userDL datalayers.UserDatalayer,
+	cryptoService ICryptoService,
+	tokenHandler ITokenHandler,
+	gormDb *gorm.DB,
+) IUserService {
 	return UserService{
 		UserDataLayer: userDL,
 		CryptoService: cryptoService,
-		TokenHandler: tokenHandler,
+		TokenHandler:  tokenHandler,
+		GormDb:        gormDb,
 	}
 }
 
@@ -37,7 +46,8 @@ func NewDefaultUserService() IUserService {
 	return UserService{
 		UserDataLayer: datalayers.NewGormUserDatalayer(),
 		CryptoService: NewDefaultCryptoService(),
-		TokenHandler: NewDefaultSymmetricalPasetoTokenHandler(),
+		TokenHandler:  NewDefaultSymmetricalPasetoTokenHandler(),
+		GormDb:        gormdb.GetDefaultGormClient(),
 	}
 }
 
@@ -51,16 +61,16 @@ func (us UserService) CreateUser(registerData inputs.Registration) error {
 	_, err = us.UserDataLayer.CreateUser(
 		models.UserInfo{
 			Password: hashedPass,
-			Email: registerData.Email,
+			Email:    registerData.Email,
 		},
-		gormdb.GetDefaultGormClient(),
+		us.GormDb,
 	)
 
 	return err
 }
 
 func (us UserService) VerifyUser(loginData inputs.Login) (string, error) {
-	user, err := us.UserDataLayer.GetHashedUserPassword(loginData.Email, gormdb.GetDefaultGormClient())
+	user, err := us.UserDataLayer.GetHashedUserPassword(loginData.Email, us.GormDb)
 
 	if err != nil {
 		fmt.Println("Invalid email")
@@ -86,15 +96,15 @@ func (us UserService) VerifyUser(loginData inputs.Login) (string, error) {
 }
 
 func (us UserService) SoftDeleteUser(uuid string) error {
-	return us.UserDataLayer.SoftDeleteUser(uuid, gormdb.GetDefaultGormClient())
+	return us.UserDataLayer.SoftDeleteUser(uuid, us.GormDb)
 }
 
 func (us UserService) HardDeleteUser(uuid string) error {
-	return us.UserDataLayer.HardDeleteUser(uuid, gormdb.GetDefaultGormClient())
+	return us.UserDataLayer.HardDeleteUser(uuid, us.GormDb)
 }
 
 func (us UserService) GetProfile(uuid string) (*outputs.UserProfile, error) {
-	userInfo, err := us.UserDataLayer.FindUserByUuid(uuid, gormdb.GetDefaultGormClient())
+	userInfo, err := us.UserDataLayer.FindUserByUuid(uuid, us.GormDb)
 
 	if err != nil {
 		return nil, err
@@ -102,4 +112,3 @@ func (us UserService) GetProfile(uuid string) (*outputs.UserProfile, error) {
 
 	return userInfo, nil
 }
-

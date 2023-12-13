@@ -12,7 +12,10 @@ type UserDatalayer interface {
 	FindUserByEmail(email string, gDB *gorm.DB) (*outputs.UserProfile, error)
 	FindUserByUuid(uuid string, gDB *gorm.DB) (*outputs.UserProfile, error)
 	FindOrCreateUser(userInfo models.UserInfo, gDB *gorm.DB) (*models.UserInfo, bool, error)
+
 	GetHashedUserPassword(email string, gDB *gorm.DB) (*outputs.HashedUserPass, error)
+
+	FindAllUsers(gDB *gorm.DB) ([]outputs.UserProfile, error)
 
 	CreateUser(userInfo models.UserInfo, gDB *gorm.DB) (*models.UserInfo, error)
 
@@ -20,10 +23,18 @@ type UserDatalayer interface {
 	HardDeleteUser(uuid string, gDB *gorm.DB) error
 }
 
-type GormUserDatalayer struct {}
+type GormUserDatalayer struct{}
 
 func NewGormUserDatalayer() UserDatalayer {
 	return GormUserDatalayer{}
+}
+
+func (pus GormUserDatalayer) FindAllUsers(gDB *gorm.DB) ([]outputs.UserProfile, error) {
+	var allUsers []outputs.UserProfile
+
+	res := gDB.Model(models.UserInfo{}).Find(&allUsers)
+
+	return allUsers, res.Error
 }
 
 func (pus GormUserDatalayer) FindUserByEmail(email string, gDB *gorm.DB) (*outputs.UserProfile, error) {

@@ -25,7 +25,7 @@ func main() {
 
 	// =================== CONNECT TO THE DB ===================
 	var wg sync.WaitGroup
-		
+
 	wg.Add(1)
 
 	go common.CheckWg(
@@ -35,7 +35,7 @@ func main() {
 			if err != nil {
 				return true, err
 			}
-			
+
 			return false, err
 		}),
 		&wg,
@@ -51,12 +51,13 @@ func main() {
 	}
 
 	gDb.Logger = logger.Default.LogMode(logger.Info)
-	
+
 	// // =================== PERFORM THE SEEDS ===================
 	fmt.Println("Starting seeds")
 
+	seedfunctions.SeedRoles(gDb)
 	seedfunctions.SeedUserInfo(gDb)
+	seedfunctions.SeedUserRoles(gDb)
 
 	fmt.Println("Finished seeding")
-	
 }

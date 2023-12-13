@@ -7,4 +7,5 @@ type UserInfo struct {
 	Email         string `gorm:"unique;index;not null;default:null"`
 	EmailVerified bool   `gorm:"index;not null;default:false"`
 	Password 	  string `gorm:"not null; default: null"`
+	Roles []Role `gorm:"many2many:user_roles;"`
 }
