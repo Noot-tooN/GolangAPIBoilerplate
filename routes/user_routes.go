@@ -5,6 +5,7 @@ type UserGroup struct {
 	Login string
 	SoftDelete string
 	HardDelete string
+	GetProfile string
 }
 
 var (
@@ -13,5 +14,6 @@ var (
 		Login: "/login",
 		SoftDelete: "/soft-delete",
 		HardDelete: "/hard-delete",
+		GetProfile: "/profile",
 	}
 )

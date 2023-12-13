@@ -2,16 +2,20 @@ package datalayers
 
 import (
 	"fmt"
+	"golangapi/controllers/outputs"
 	"golangapi/models"
 
 	"gorm.io/gorm"
 )
 
 type UserDatalayer interface {
-	FindUserByEmail(email string, gDB *gorm.DB) (*models.UserInfo, error)
-	FindUserByUuid(uuid string, gDB *gorm.DB) (*models.UserInfo, error)
+	FindUserByEmail(email string, gDB *gorm.DB) (*outputs.UserProfile, error)
+	FindUserByUuid(uuid string, gDB *gorm.DB) (*outputs.UserProfile, error)
 	FindOrCreateUser(userInfo models.UserInfo, gDB *gorm.DB) (*models.UserInfo, bool, error)
+	GetHashedUserPassword(email string, gDB *gorm.DB) (*outputs.HashedUserPass, error)
+
 	CreateUser(userInfo models.UserInfo, gDB *gorm.DB) (*models.UserInfo, error)
+
 	SoftDeleteUser(uuid string, gDB *gorm.DB) error
 	HardDeleteUser(uuid string, gDB *gorm.DB) error
 }
@@ -22,22 +26,24 @@ func NewGormUserDatalayer() UserDatalayer {
 	return GormUserDatalayer{}
 }
 
-func (pus GormUserDatalayer) FindUserByEmail(email string, gDB *gorm.DB) (*models.UserInfo, error) {
-	userInfo := models.UserInfo{}
+func (pus GormUserDatalayer) FindUserByEmail(email string, gDB *gorm.DB) (*outputs.UserProfile, error) {
+	userProfile := outputs.UserProfile{}
 
-	res := gDB.Where("email = ?", email).First(&userInfo)
+	res := gDB.Model(models.UserInfo{}).Where("email = ?", email).Limit(1).Find(&userProfile)
 
-	// If not found res.Error = record not found
-	return &userInfo, res.Error
+	return &userProfile, res.Error
 }
 
-func (pus GormUserDatalayer) FindUserByUuid(uuid string, gDB *gorm.DB) (*models.UserInfo, error) {
-	userInfo := models.UserInfo{}
+func (pus GormUserDatalayer) FindUserByUuid(uuid string, gDB *gorm.DB) (*outputs.UserProfile, error) {
+	userProfile := outputs.UserProfile{}
 
-	res := gDB.Where("uuid = ?", uuid).First(&userInfo)
+	res := gDB.Model(models.UserInfo{}).Where("uuid = ?", uuid).Limit(1).Find(&userProfile)
 
-	// If not found res.Error = record not found
-	return &userInfo, res.Error
+	if res.RowsAffected == 0 {
+		return nil, fmt.Errorf("couldn't find user")
+	}
+
+	return &userProfile, res.Error
 }
 
 func (pus GormUserDatalayer) FindOrCreateUser(userInfo models.UserInfo, gDB *gorm.DB) (*models.UserInfo, bool, error) {
@@ -86,4 +92,13 @@ func (pus GormUserDatalayer) HardDeleteUser(uuid string, gDB *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func (pus GormUserDatalayer) GetHashedUserPassword(email string, gDB *gorm.DB) (*outputs.HashedUserPass, error) {
+	userPassProfile := outputs.HashedUserPass{}
+
+	res := gDB.Model(models.UserInfo{}).Where("email = ?", email).Limit(1).Find(&userPassProfile)
+
+	// If not found res.Error = record not found
+	return &userPassProfile, res.Error
 }

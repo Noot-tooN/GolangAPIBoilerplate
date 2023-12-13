@@ -34,6 +34,7 @@ func NewGinRouter() *gin.Engine {
 		userGroup.POST(routes.User.Login, userController.LoginUser)
 		userGroup.DELETE(routes.User.SoftDelete, checkTokenMW.UserTokenOk(), userController.SoftDeleteUser)
 		userGroup.DELETE(routes.User.HardDelete, checkTokenMW.UserTokenOk(), userController.HardDeleteUser)
+		userGroup.GET(routes.User.GetProfile, checkTokenMW.UserTokenOk(), userController.GetUserProfile)
 	}
 
 	return router

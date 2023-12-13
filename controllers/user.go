@@ -15,9 +15,10 @@ type IUserController interface {
 	LoginUser(ctx *gin.Context)
 
 	// GetUserDataById(ctx *gin.Context)
-	// GetUserData(ctx *gin.Context)
 	SoftDeleteUser(ctx *gin.Context)
 	HardDeleteUser(ctx *gin.Context)
+
+	GetUserProfile(ctx *gin.Context)
 }
 
 type UserController struct {
@@ -160,4 +161,37 @@ func (uc UserController) HardDeleteUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "test",
 	})
+}
+
+func (uc UserController) GetUserProfile(ctx *gin.Context) {
+	userUuid, exists := ctx.Get("USER_UUID")
+
+	if !exists {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Tried using the app without user uuid",
+			},
+		)
+
+		return
+	}
+
+	response, err := uc.UserService.GetProfile(fmt.Sprintf("%v", userUuid))
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Couldn't fetch the profile",
+			},
+		)
+
+		return
+	}
+
+	ctx.JSON(
+		http.StatusOK,
+		response,
+	)
 }

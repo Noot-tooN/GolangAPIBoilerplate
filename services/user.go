@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"golangapi/controllers/inputs"
+	"golangapi/controllers/outputs"
 	gormdb "golangapi/databases/gorm"
 	"golangapi/datalayers"
 	"golangapi/models"
@@ -14,6 +15,8 @@ type IUserService interface {
 
 	SoftDeleteUser(uuid string) error
 	HardDeleteUser(uuid string) error
+
+	GetProfile(uuid string) (*outputs.UserProfile, error)
 }
 
 type UserService struct {
@@ -57,7 +60,7 @@ func (us UserService) CreateUser(registerData inputs.Registration) error {
 }
 
 func (us UserService) VerifyUser(loginData inputs.Login) (string, error) {
-	user, err := us.UserDataLayer.FindUserByEmail(loginData.Email, gormdb.GetDefaultGormClient())
+	user, err := us.UserDataLayer.GetHashedUserPassword(loginData.Email, gormdb.GetDefaultGormClient())
 
 	if err != nil {
 		fmt.Println("Invalid email")
@@ -89,3 +92,14 @@ func (us UserService) SoftDeleteUser(uuid string) error {
 func (us UserService) HardDeleteUser(uuid string) error {
 	return us.UserDataLayer.HardDeleteUser(uuid, gormdb.GetDefaultGormClient())
 }
+
+func (us UserService) GetProfile(uuid string) (*outputs.UserProfile, error) {
+	userInfo, err := us.UserDataLayer.FindUserByUuid(uuid, gormdb.GetDefaultGormClient())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userInfo, nil
+}
+
