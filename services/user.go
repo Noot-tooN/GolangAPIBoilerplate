@@ -11,6 +11,9 @@ import (
 type IUserService interface {
 	CreateUser(registerData inputs.Registration) error
 	VerifyUser(loginData inputs.Login) (string, error)
+
+	SoftDeleteUser(uuid string) error
+	HardDeleteUser(uuid string) error
 }
 
 type UserService struct {
@@ -68,7 +71,9 @@ func (us UserService) VerifyUser(loginData inputs.Login) (string, error) {
 		return "", fmt.Errorf("invalid combination")
 	}
 
-	token, err := us.TokenHandler.CreateToken(nil, nil)
+	token, err := us.TokenHandler.CreateToken(map[string]string{
+		"uuid": user.Uuid.String(),
+	}, nil)
 
 	if err != nil {
 		return "", fmt.Errorf("internal server error")
@@ -77,3 +82,10 @@ func (us UserService) VerifyUser(loginData inputs.Login) (string, error) {
 	return token, nil
 }
 
+func (us UserService) SoftDeleteUser(uuid string) error {
+	return us.UserDataLayer.SoftDeleteUser(uuid, gormdb.GetDefaultGormClient())
+}
+
+func (us UserService) HardDeleteUser(uuid string) error {
+	return us.UserDataLayer.HardDeleteUser(uuid, gormdb.GetDefaultGormClient())
+}

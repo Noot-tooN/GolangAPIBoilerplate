@@ -1,6 +1,7 @@
 package datalayers
 
 import (
+	"fmt"
 	"golangapi/models"
 
 	"gorm.io/gorm"
@@ -11,7 +12,8 @@ type UserDatalayer interface {
 	FindUserByUuid(uuid string, gDB *gorm.DB) (*models.UserInfo, error)
 	FindOrCreateUser(userInfo models.UserInfo, gDB *gorm.DB) (*models.UserInfo, bool, error)
 	CreateUser(userInfo models.UserInfo, gDB *gorm.DB) (*models.UserInfo, error)
-	DeleteUser(uuid string, gDB *gorm.DB) error
+	SoftDeleteUser(uuid string, gDB *gorm.DB) error
+	HardDeleteUser(uuid string, gDB *gorm.DB) error
 }
 
 type GormUserDatalayer struct {}
@@ -58,6 +60,30 @@ func (pus GormUserDatalayer) CreateUser(userInfo models.UserInfo, gDB *gorm.DB) 
 	return &userInfo, res.Error
 }
 
-func (pus GormUserDatalayer) DeleteUser(uuid string, gDB *gorm.DB) error {
-	return gDB.Delete(&models.UserInfo{}, uuid).Error
+func (pus GormUserDatalayer) SoftDeleteUser(uuid string, gDB *gorm.DB) error {
+	res := gDB.Where("uuid = ?", uuid).Delete(&models.UserInfo{})
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows updated")
+	}
+
+	return nil
+}
+
+func (pus GormUserDatalayer) HardDeleteUser(uuid string, gDB *gorm.DB) error {
+	res := gDB.Unscoped().Where("uuid = ?", uuid).Delete(&models.UserInfo{})
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("no rows updated")
+	}
+
+	return nil
 }

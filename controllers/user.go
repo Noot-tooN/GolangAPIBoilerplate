@@ -16,7 +16,8 @@ type IUserController interface {
 
 	// GetUserDataById(ctx *gin.Context)
 	// GetUserData(ctx *gin.Context)
-	// DeleteUser(ctx *gin.Context)
+	SoftDeleteUser(ctx *gin.Context)
+	HardDeleteUser(ctx *gin.Context)
 }
 
 type UserController struct {
@@ -95,4 +96,68 @@ func (uc UserController) LoginUser(ctx *gin.Context) {
 			"token": token,
 		},
 	)
+}
+
+func (uc UserController) SoftDeleteUser(ctx *gin.Context) {
+	userUuid, exists := ctx.Get("USER_UUID")
+
+	if !exists {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Tried using the app without user uuid",
+			},
+		)
+
+		return
+	}
+
+	err := uc.UserService.SoftDeleteUser(fmt.Sprintf("%v", userUuid))
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Couldn' delete the user",
+			},
+		)
+
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "test",
+	})
+}
+
+func (uc UserController) HardDeleteUser(ctx *gin.Context) {
+	userUuid, exists := ctx.Get("USER_UUID")
+
+	if !exists {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Tried using the app without user uuid",
+			},
+		)
+
+		return
+	}
+
+	err := uc.UserService.HardDeleteUser(fmt.Sprintf("%v", userUuid))
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Couldn' delete the user",
+			},
+		)
+
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "test",
+	})
 }

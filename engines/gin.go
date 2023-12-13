@@ -2,12 +2,16 @@ package engines
 
 import (
 	"golangapi/controllers"
+	"golangapi/middlewares"
 	"golangapi/routes"
 
 	"github.com/gin-gonic/gin"
 )
 
 func NewGinRouter() *gin.Engine {
+	// Init middlewares
+	checkTokenMW := middlewares.NewDefaultUserMiddleware()
+
 	// Create new instance
 	router := gin.New()
 
@@ -28,6 +32,8 @@ func NewGinRouter() *gin.Engine {
 	{
 		userGroup.POST(routes.User.Register, userController.RegisterUser)
 		userGroup.POST(routes.User.Login, userController.LoginUser)
+		userGroup.DELETE(routes.User.SoftDelete, checkTokenMW.UserTokenOk(), userController.SoftDeleteUser)
+		userGroup.DELETE(routes.User.HardDelete, checkTokenMW.UserTokenOk(), userController.HardDeleteUser)
 	}
 
 	return router
