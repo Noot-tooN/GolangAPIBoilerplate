@@ -126,6 +126,17 @@ func (um UserMiddleware) RoleMiddlewareFactory(allowedRoles ...constants.RoleNam
 
 		userRoles, err := um.UserRoleDataLayer.GetUserRoles(userUuid, gormdb.GetDefaultGormClient())
 
+		if len(userRoles) == 0 {
+			ctx.AbortWithStatusJSON(
+				http.StatusUnauthorized,
+				gin.H{
+					"message": "Unauthorized",
+				},
+			)
+
+			return
+		}
+
 		if err != nil {
 			ctx.AbortWithStatusJSON(
 				http.StatusInternalServerError,
