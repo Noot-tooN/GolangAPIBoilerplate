@@ -7,7 +7,6 @@ import (
 
 type Role struct {
 	basemodels.BaseUuidModelSoftDelete
-	Name constants.RoleName `gorm:"unique;index;not null;default:null"`
-	Users []UserInfo `gorm:"many2many:user_roles;"`
-
+	Name  constants.RoleName `gorm:"unique;index;not null;default:null"`
+	Users []UserInfo         `gorm:"many2many:user_roles;"`
 }
