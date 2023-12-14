@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"golangapi/controllers/inputs"
 	"golangapi/services"
 	"net/http"
 
@@ -11,15 +13,20 @@ import (
 type IAdminController interface {
 	GetUserDataById(ctx *gin.Context)
 	GetAllUsers(ctx *gin.Context)
+
+	AddRoleForUser(ctx *gin.Context)
+	RemoveRoleForUser(ctx *gin.Context)
 }
 
 type AdminController struct {
-	UserService services.IUserService
+	UserService     services.IUserService
+	UserRoleService services.IUserRoleService
 }
 
 func NewDefaultAdminController() IAdminController {
 	return &AdminController{
-		UserService: services.NewDefaultUserService(),
+		UserService:     services.NewDefaultUserService(),
+		UserRoleService: services.NewDefaultUserRoleService(),
 	}
 }
 
@@ -83,4 +90,80 @@ func (ac AdminController) GetUserDataById(ctx *gin.Context) {
 		http.StatusOK,
 		userProfile,
 	)
+}
+
+func (ac AdminController) AddRoleForUser(ctx *gin.Context) {
+	var userRoleData inputs.RoleForUser
+
+	err := ctx.ShouldBindUri(&userRoleData)
+
+	if err != nil {
+		fmt.Println(err)
+
+		ctx.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{
+				"message": "Please provide valid url params",
+			},
+		)
+		return
+	}
+
+	// This FromStringOrNil should always pass because validator should catch non uuids
+	err = ac.UserRoleService.AddRoleForUser(
+		uuid.FromStringOrNil(userRoleData.UserUuid),
+		userRoleData.Role,
+	)
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Couldn't add the role for the user",
+			},
+		)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Finished",
+	})
+}
+
+func (ac AdminController) RemoveRoleForUser(ctx *gin.Context) {
+	var userRoleData inputs.RoleForUser
+
+	err := ctx.ShouldBindUri(&userRoleData)
+
+	if err != nil {
+		fmt.Println(err)
+
+		ctx.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			gin.H{
+				"message": "Please provide valid url params",
+			},
+		)
+		return
+	}
+
+	// This FromStringOrNil should always pass because validator should catch non uuids
+	err = ac.UserRoleService.RemoveRoleForUser(
+		uuid.FromStringOrNil(userRoleData.UserUuid),
+		userRoleData.Role,
+	)
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{
+				"message": "Couldn't remove the role for the user",
+			},
+		)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Finished",
+	})
 }

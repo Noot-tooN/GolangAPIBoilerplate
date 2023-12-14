@@ -49,6 +49,7 @@ func SeedUserInfo(db *gorm.DB) error {
 
 		userService := services.NewUserService(
 			datalayers.NewGormUserDatalayer(),
+			datalayers.NewGormUserRoleDatalayer(),
 			services.NewDefaultCryptoService(),
 			services.NewDefaultSymmetricalPasetoTokenHandler(),
 			txWithClauses,

@@ -11,6 +11,8 @@ import (
 )
 
 func SeedUserRoles(db *gorm.DB) error {
+	fmt.Println("Seeding User Roles")
+
 	// Get Roles
 	roleDl := datalayers.NewGormRoleDatalayer()
 
@@ -54,22 +56,14 @@ func SeedUserRoles(db *gorm.DB) error {
 	return db.Transaction(func(tx *gorm.DB) error {
 		txWithClauses := tx.Clauses(clause.OnConflict{DoNothing: true})
 
-		fmt.Println("Seeding User Roles")
+		adminUuid := userUuidMap[randomUsers[0].Email]
 
-		for _, v := range randomUsers {
-			userUuid := userUuidMap[v.Email]
-			roleUuid := roleUuidMap[fmt.Sprintf("%v", constants.BASIC)]
-
-			err = userRoleDl.Create(userUuid, roleUuid, txWithClauses)
-
-			if err != nil {
-				return err
-			}
-
-			adminUuid := userUuidMap[randomUsers[0].Email]
-
-			userRoleDl.Create(adminUuid, roleUuidMap[fmt.Sprintf("%v", constants.ADMIN)], txWithClauses)
-		}
+		// Add ADMIN roles
+		userRoleDl.AddRoleForUserByUuid(
+			roleUuidMap[fmt.Sprintf("%v", constants.ADMIN)],
+			adminUuid,
+			txWithClauses,
+		)
 
 		return nil
 	})

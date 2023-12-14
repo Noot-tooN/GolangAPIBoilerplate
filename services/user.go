@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"golangapi/constants"
 	"golangapi/controllers/inputs"
 	"golangapi/controllers/outputs"
 	gormdb "golangapi/databases/gorm"
@@ -23,32 +24,36 @@ type IUserService interface {
 }
 
 type UserService struct {
-	UserDataLayer datalayers.UserDatalayer
-	CryptoService ICryptoService
-	TokenHandler  ITokenHandler
-	GormDb        *gorm.DB
+	UserDataLayer     datalayers.UserDatalayer
+	UserRoleDataLayer datalayers.UserRoleDatalayer
+	CryptoService     ICryptoService
+	TokenHandler      ITokenHandler
+	GormDb            *gorm.DB
 }
 
 func NewUserService(
 	userDL datalayers.UserDatalayer,
+	userRoleDL datalayers.UserRoleDatalayer,
 	cryptoService ICryptoService,
 	tokenHandler ITokenHandler,
 	gormDb *gorm.DB,
 ) IUserService {
 	return UserService{
-		UserDataLayer: userDL,
-		CryptoService: cryptoService,
-		TokenHandler:  tokenHandler,
-		GormDb:        gormDb,
+		UserDataLayer:     userDL,
+		CryptoService:     cryptoService,
+		TokenHandler:      tokenHandler,
+		GormDb:            gormDb,
+		UserRoleDataLayer: userRoleDL,
 	}
 }
 
 func NewDefaultUserService() IUserService {
 	return UserService{
-		UserDataLayer: datalayers.NewGormUserDatalayer(),
-		CryptoService: NewDefaultCryptoService(),
-		TokenHandler:  NewDefaultSymmetricalPasetoTokenHandler(),
-		GormDb:        gormdb.GetDefaultGormClient(),
+		UserDataLayer:     datalayers.NewGormUserDatalayer(),
+		UserRoleDataLayer: datalayers.NewGormUserRoleDatalayer(),
+		CryptoService:     NewDefaultCryptoService(),
+		TokenHandler:      NewDefaultSymmetricalPasetoTokenHandler(),
+		GormDb:            gormdb.GetDefaultGormClient(),
 	}
 }
 
@@ -59,13 +64,29 @@ func (us UserService) CreateUser(registerData inputs.Registration) error {
 		return err
 	}
 
-	_, err = us.UserDataLayer.CreateUser(
-		models.UserInfo{
-			Password: hashedPass,
-			Email:    registerData.Email,
-		},
-		us.GormDb,
-	)
+	err = us.GormDb.Transaction(func(tx *gorm.DB) error {
+		user, innerErr := us.UserDataLayer.CreateUser(
+			models.UserInfo{
+				Password: hashedPass,
+				Email:    registerData.Email,
+			},
+			tx,
+		)
+
+		if innerErr != nil {
+			fmt.Println(innerErr)
+			return innerErr
+		}
+
+		innerErr = us.UserRoleDataLayer.UpsertRoleForUser(constants.BASIC, user.Uuid, tx)
+
+		if innerErr != nil {
+			fmt.Println(innerErr)
+			return innerErr
+		}
+
+		return nil
+	})
 
 	return err
 }

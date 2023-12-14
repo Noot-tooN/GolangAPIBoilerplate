@@ -44,6 +44,9 @@ func NewGinRouter() *gin.Engine {
 	{
 		adminGroup.GET(routes.Admin.GetUserInfo, adminController.GetUserDataById)
 		adminGroup.GET(routes.Admin.GetAllUsers, adminController.GetAllUsers)
+
+		adminGroup.POST(routes.Admin.AddRoleForUser, adminController.AddRoleForUser)
+		adminGroup.DELETE(routes.Admin.RemoveRoleForUser, adminController.RemoveRoleForUser)
 	}
 
 	return router
